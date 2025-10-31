@@ -149,8 +149,8 @@ func (s *Scanner) scanLine(line string, lineNum int, filePath, fileExt string) [
 
 			// Check if this high-entropy string was already matched by a regex rule
 			alreadyMatched := false
-			for _, r := range results {
-				if strings.Contains(line, token) {
+			for _, result := range results {
+				if result.Line == lineNum && strings.Contains(result.Match, token) {
 					alreadyMatched = true
 					break
 				}
