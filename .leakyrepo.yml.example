@@ -1,0 +1,49 @@
+# LeakyRepo Configuration File
+# This file contains regex rules and entropy thresholds for secret detection
+
+# Entropy threshold for high-entropy string detection (0-8 scale)
+# Higher values mean more randomness required to trigger detection
+entropy_threshold: 4.5
+
+# Regex-based detection rules
+rules:
+  # AWS Access Key pattern
+  - id: aws_access_key
+    description: "AWS Access Key"
+    severity: high
+    pattern: 'AKIA[0-9A-Z]{16}'
+    file_types:
+      - .env
+      - .yaml
+      - .yml
+      - .json
+      - .py
+      - .js
+      - .ts
+      - .go
+
+  # Generic API Key pattern
+  - id: generic_api_key
+    description: "Generic API Key pattern"
+    severity: medium
+    pattern: '(?i)(api[_-]?key|apikey)\s*[:=]\s*[''"]?([a-zA-Z0-9_\-]{20,})[''"]?'
+    file_types:
+      - .env
+      - .yaml
+      - .yml
+      - .json
+      - .py
+      - .js
+      - .ts
+      - .go
+
+# Allowlist: patterns that should be ignored
+allowlist:
+  # File patterns to ignore (supports glob patterns)
+  files:
+    - .leakyrepoignore
+    - .git/**
+  
+  # String patterns to ignore (exact matches)
+  strings: []
+
