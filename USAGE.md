@@ -8,7 +8,7 @@ This guide explains how to use LeakyRepo as a developer to detect secrets before
 
 ```bash
 # Clone or download the repository
-git clone https://github.com/lgboyce/leakyrepo.git
+git clone https://github.com/gittingsboyce/leakyrepo.git
 cd leakyrepo
 
 # Build the binary
@@ -281,7 +281,7 @@ jobs:
       
       - name: Build LeakyRepo
         run: |
-          git clone https://github.com/lgboyce/leakyrepo.git
+          git clone https://github.com/gittingsboyce/leakyrepo.git
           cd leakyrepo
           go build -o ../leakyrepo .
           cd ..

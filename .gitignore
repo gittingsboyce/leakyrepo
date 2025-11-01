@@ -27,6 +27,15 @@ go.work.sum
 # env file
 .env
 
+# ignore leakyrepo config 
+.leakyrepo.yml
+
+# Build binaries and artifacts
+leakyrepo
+build/
+dist/
+*.tar.gz
+*.zip
 # Editor/IDE
 # .idea/
 # .vscode/

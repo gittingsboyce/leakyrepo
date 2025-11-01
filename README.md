@@ -12,8 +12,17 @@ A secrets detection tool that catches API keys, tokens, and credentials before t
 
 ## Installation
 
+### Homebrew (Recommended)
+
 ```bash
-git clone https://github.com/lgboyce/leakyrepo.git
+brew tap gittingsboyce/leakyrepo
+brew install leakyrepo
+```
+
+### Build from Source
+
+```bash
+git clone https://github.com/gittingsboyce/leakyrepo.git
 cd leakyrepo
 go build -o leakyrepo .
 ```
