@@ -16,6 +16,7 @@ import (
 var (
 	jsonOutput string
 	explain    bool
+	interactive bool
 )
 
 var scanCmd = &cobra.Command{
@@ -29,6 +30,7 @@ If no files are specified, scans staged files in the git repository.`,
 func init() {
 	scanCmd.Flags().StringVar(&jsonOutput, "json", "", "Output results to JSON file")
 	scanCmd.Flags().BoolVar(&explain, "explain", false, "Show explanation for each detected secret")
+	scanCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive mode: prompt to ignore false positives")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -113,8 +115,55 @@ func runScan(cmd *cobra.Command, args []string) error {
 		outputHumanReadable(allResults, explain)
 	}
 
-	// Exit with error if secrets were found
+	// Handle interactive mode
+	if interactive && len(allResults) > 0 {
+		shouldRescan, err := runInteractive(allResults, workDir)
+		if err != nil {
+			return fmt.Errorf("interactive mode error: %w", err)
+		}
+
+		if shouldRescan {
+			// Reload ignore patterns after updating .leakyrepoignore
+			ignorePatterns, err = ignore.LoadIgnorePatterns(filepath.Join(workDir, ".leakyrepoignore"))
+			if err != nil {
+				return fmt.Errorf("failed to reload ignore patterns: %w", err)
+			}
+
+			// Re-create scanner with updated ignore patterns
+			scnr, err = scanner.NewScanner(cfg, ignorePatterns)
+			if err != nil {
+				return fmt.Errorf("failed to create scanner: %w", err)
+			}
+
+			// Re-scan files
+			var newResults []scanner.Result
+			for _, file := range filesToScan {
+				results, err := scnr.ScanFile(file)
+				if err != nil {
+					fmt.Fprintf(os.Stderr, "Warning: failed to scan %s: %v\n", file, err)
+					continue
+				}
+				newResults = append(newResults, results...)
+			}
+
+			if len(newResults) > 0 {
+				fmt.Printf("\n⚠️  Still found %d potential secret(s) after ignoring:\n\n", len(newResults))
+				outputHumanReadable(newResults, explain)
+				fmt.Println("\nPlease review remaining findings or add more ignore patterns.")
+				os.Exit(1)
+			} else {
+				fmt.Println("✓ No secrets found! All ignored patterns applied successfully.")
+				return nil
+			}
+		}
+	}
+
+	// Exit with error if secrets were found (and not in interactive mode)
 	if len(allResults) > 0 {
+		if !interactive {
+			fmt.Println("\n💡 Tip: Run with --interactive (-i) to ignore false positives interactively")
+			fmt.Println("   Or use: leakyrepo ignore <file>")
+		}
 		os.Exit(1)
 	}
 

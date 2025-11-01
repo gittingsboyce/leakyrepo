@@ -5,6 +5,7 @@ A secrets detection tool that catches API keys, tokens, and credentials before t
 ## Features
 
 - **CLI Scanner**: Scan staged files or specific files
+- **Interactive Mode**: Easily ignore false positives interactively (`leakyrepo scan -i`)
 - **Regex & Entropy Detection**: Custom regex patterns + Shannon entropy for high-entropy strings
 - **Pre-commit Hook**: Automatically block commits with secrets
 - **JSON Output**: Machine-readable reports for CI/CD
@@ -33,8 +34,8 @@ go build -o leakyrepo .
 # Initialize configuration
 leakyrepo init
 
-# Scan staged files
-leakyrepo scan
+# Scan staged files (interactive mode recommended)
+leakyrepo scan -i
 
 # Install pre-commit hook (recommended)
 leakyrepo install-hook
@@ -47,8 +48,10 @@ leakyrepo install-hook
 | Command | Description |
 |---------|-------------|
 | `leakyrepo scan [files...]` | Scan files (or staged files if none specified) |
+| `leakyrepo scan -i` | **Interactive mode** - prompt to ignore false positives |
 | `leakyrepo scan --json <file>` | Output JSON report |
 | `leakyrepo scan --explain` | Show explanation for each detection |
+| `leakyrepo ignore <file>` | Quick command to ignore a file or pattern |
 | `leakyrepo init` | Create default `.leakyrepo.yml` |
 | `leakyrepo install-hook` | Install Git pre-commit hook |
 
@@ -88,6 +91,21 @@ dist/
 🔒 [High] AWS Access Key found in config.env:42
    Match: AKIA****************
 ```
+
+### Interactive Mode (Recommended)
+
+When false positives are detected, use interactive mode to quickly ignore them:
+
+```bash
+leakyrepo scan -i
+```
+
+Interactive mode:
+- Shows all findings grouped by file
+- Prompts to ignore false positives
+- Automatically updates `.leakyrepoignore`
+- Re-scans to verify all issues resolved
+- Handles multiple secrets efficiently
 
 ## How It Works
 

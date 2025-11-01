@@ -28,6 +28,7 @@ func init() {
 	rootCmd.AddCommand(scanCmd)
 	rootCmd.AddCommand(initCmd)
 	rootCmd.AddCommand(installHookCmd)
+	rootCmd.AddCommand(ignoreCmd)
 }
 
 // getWorkingDir returns the current working directory
