@@ -38,15 +38,17 @@ func init() {
 func runScan(cmd *cobra.Command, args []string) error {
 	workDir := getWorkingDir()
 
-	// Find and load config
+	// Find and load config, or use default if not found
+	var cfg *config.Config
 	configPath, err := findConfigPath(workDir)
 	if err != nil {
-		return fmt.Errorf("failed to find config: %w\nRun 'leakyrepo init' to create a default configuration", err)
-	}
-
-	cfg, err := config.LoadConfig(configPath)
-	if err != nil {
-		return fmt.Errorf("failed to load config: %w", err)
+		// No config found, use default configuration
+		cfg = config.DefaultConfig()
+	} else {
+		cfg, err = config.LoadConfig(configPath)
+		if err != nil {
+			return fmt.Errorf("failed to load config: %w", err)
+		}
 	}
 
 	// Load ignore patterns
