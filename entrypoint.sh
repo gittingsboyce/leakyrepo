@@ -1,0 +1,22 @@
+#!/bin/sh
+# Entrypoint script for LeakyRepo Docker Action
+# This script handles arguments from GitHub Actions and passes them to leakyrepo
+
+set -e
+
+# If no arguments provided, use the default CMD from Dockerfile
+if [ $# -eq 0 ]; then
+    exec /usr/local/bin/leakyrepo scan --help
+    exit 0
+fi
+
+# If first argument contains spaces, it's likely a string from GitHub Actions
+# Split it into separate arguments
+if echo "$1" | grep -q ' '; then
+    # Use eval to properly split the arguments
+    eval "set -- $1"
+fi
+
+# Execute leakyrepo with all arguments
+exec /usr/local/bin/leakyrepo "$@"
+

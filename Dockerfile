@@ -41,8 +41,11 @@ RUN apk --no-cache add ca-certificates git
 # Copy the compiled binary from builder stage
 COPY --from=builder /build/leakyrepo /usr/local/bin/leakyrepo
 
-# Ensure the binary is executable
-RUN chmod +x /usr/local/bin/leakyrepo
+# Copy entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+
+# Ensure files are executable
+RUN chmod +x /usr/local/bin/leakyrepo /entrypoint.sh
 
 # Set working directory to allow mounting project files
 WORKDIR /workspace
@@ -50,9 +53,9 @@ WORKDIR /workspace
 # Note: We run as root for Docker container actions compatibility
 # GitHub Actions may mount volumes that require root permissions
 
-# Set the entrypoint to leakyrepo
-# All arguments passed to docker run will be forwarded to the binary
-ENTRYPOINT ["/usr/local/bin/leakyrepo"]
+# Set the entrypoint to our script
+# All arguments passed to docker run will be forwarded to leakyrepo via the script
+ENTRYPOINT ["/entrypoint.sh"]
 
 # Default command if none provided
 # Users can override this with docker run arguments
