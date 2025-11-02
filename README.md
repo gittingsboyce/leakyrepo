@@ -173,10 +173,7 @@ See [`.github/workflows/leakyrepo-scan.yaml`](.github/workflows/leakyrepo-scan.y
 Run LeakyRepo in any Docker-compatible CI/CD environment:
 
 ```bash
-# First, build the Linux binary
-GOOS=linux GOARCH=amd64 go build -o leakyrepo .
-
-# Build the Docker image
+# Build the Docker image (automatically builds the binary)
 docker build -t leakyrepo .
 
 # Run scan (config files from host are mounted automatically)
