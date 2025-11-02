@@ -51,7 +51,7 @@ leakyrepo install-hook
 | Command | Description |
 |---------|-------------|
 | `leakyrepo scan [files...]` | Scan files (or staged files if none specified) |
-| `leakyrepo scan --all` | Scan all tracked files in the repository |
+| `leakyrepo scan --all` | Scan all tracked files in the repository (useful for CI/CD) |
 | `leakyrepo scan -i` | **Interactive mode** - prompt to ignore false positives |
 | `leakyrepo scan --json <file>` | Output JSON report |
 | `leakyrepo scan --explain` | Show explanation for each detection |
@@ -173,7 +173,10 @@ See [`.github/workflows/leakyrepo-scan.yaml`](.github/workflows/leakyrepo-scan.y
 Run LeakyRepo in any Docker-compatible CI/CD environment:
 
 ```bash
-# Build the image
+# First, build the Linux binary
+GOOS=linux GOARCH=amd64 go build -o leakyrepo .
+
+# Build the Docker image
 docker build -t leakyrepo .
 
 # Run scan (config files from host are mounted automatically)
