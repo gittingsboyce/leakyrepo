@@ -16,6 +16,7 @@ type Scanner struct {
 	config        *config.Config
 	compiledRules []compiledRule
 	ignorePatterns []string
+	workDir       string
 }
 
 type compiledRule struct {
@@ -25,10 +26,12 @@ type compiledRule struct {
 
 // NewScanner creates a new scanner with the given configuration
 func NewScanner(cfg *config.Config, ignorePatterns []string) (*Scanner, error) {
+	workDir, _ := os.Getwd() // Get current working directory for relative path matching
 	scanner := &Scanner{
 		config:        cfg,
 		compiledRules: make([]compiledRule, 0, len(cfg.Rules)),
 		ignorePatterns: ignorePatterns,
+		workDir:       workDir,
 	}
 
 	// Compile regex patterns
@@ -219,8 +222,15 @@ func (s *Scanner) shouldIgnoreFile(filePath string) bool {
 		// Support directory patterns
 		if strings.HasSuffix(pattern, "/**") {
 			dirPattern := strings.TrimSuffix(pattern, "/**")
+			// Try absolute path first
 			if strings.HasPrefix(filePath, dirPattern+"/") {
 				return true
+			}
+			// Also check relative path from workDir
+			if relPath, err := filepath.Rel(s.workDir, filePath); err == nil {
+				if strings.HasPrefix(relPath, dirPattern+"/") {
+					return true
+				}
 			}
 		}
 	}

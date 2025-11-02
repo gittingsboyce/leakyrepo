@@ -1,0 +1,27 @@
+# GitHub Action for LeakyRepo Secret Detection
+# This is a Docker container action that wraps LeakyRepo for CI/CD usage
+
+name: 'LeakyRepo Secret Scan'
+description: 'Scan your repository for secrets using LeakyRepo'
+
+# Define inputs that users can pass to the action
+inputs:
+  args:
+    description: 'Arguments to pass to leakyrepo command'
+    required: false
+    # Default: scan all tracked files in CI - LeakyRepo exits with error if secrets found
+    default: 'scan --all'
+
+# Specify that this is a Docker container action
+runs:
+  using: 'docker'
+  
+  # Point to the Dockerfile at the root of the repository
+  # GitHub Actions will build this image when the action runs
+  image: 'Dockerfile'
+  
+  # Forward all input arguments to the leakyrepo binary
+  # Note: GitHub Actions treats inputs.args as a single string, but Cobra will parse it correctly
+  args:
+    - ${{ inputs.args }}
+

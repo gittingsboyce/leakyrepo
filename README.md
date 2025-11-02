@@ -2,12 +2,15 @@
 
 A secrets detection tool that catches API keys, tokens, and credentials before they're committed to version control.
 
+You can learn more about our project and its future at https://leakyrepo.com/
+
 ## Features
 
-- **CLI Scanner**: Scan staged files or specific files
+- **CLI Scanner**: Scan staged files, all tracked files, or specific files
 - **Interactive Mode**: Easily ignore false positives interactively (`leakyrepo scan -i`)
 - **Regex & Entropy Detection**: Custom regex patterns + Shannon entropy for high-entropy strings
 - **Pre-commit Hook**: Automatically block commits with secrets
+- **CI/CD Integration**: Docker and GitHub Actions support
 - **JSON Output**: Machine-readable reports for CI/CD
 - **Configurable**: Customize rules, thresholds, and ignore patterns
 
@@ -48,6 +51,7 @@ leakyrepo install-hook
 | Command | Description |
 |---------|-------------|
 | `leakyrepo scan [files...]` | Scan files (or staged files if none specified) |
+| `leakyrepo scan --all` | Scan all tracked files in the repository |
 | `leakyrepo scan -i` | **Interactive mode** - prompt to ignore false positives |
 | `leakyrepo scan --json <file>` | Output JSON report |
 | `leakyrepo scan --explain` | Show explanation for each detection |
@@ -113,6 +117,75 @@ Interactive mode:
 - **Entropy Detection**: Detects high-entropy strings using Shannon entropy
 
 Default entropy threshold: 4.5 (configurable)
+
+## CI/CD Integration
+
+LeakyRepo can be easily integrated into your CI/CD pipelines using Docker or GitHub Actions.
+
+### GitHub Actions
+
+Use the LeakyRepo GitHub Action to automatically scan your repository:
+
+```yaml
+name: LeakyRepo Secret Scan
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Run LeakyRepo
+        uses: ./github-action
+        with:
+          args: scan --all
+```
+
+**What gets scanned?**
+- By default, `scan --all` scans all tracked files in your repository
+- Configuration files (`.leakyrepo.yml` and `.leakyrepoignore`) are automatically picked up
+- The Action exits with code 1 if secrets are found, failing the CI job
+
+**Customizing the scan:**
+```yaml
+- Scan with JSON output
+  args: scan --all --json secrets-report.json
+
+- Scan with explanations
+  args: scan --all --explain
+
+- Scan only staged files
+  args: scan
+```
+
+See [`.github/workflows/leakyrepo-scan.yaml`](.github/workflows/leakyrepo-scan.yaml) for a complete example.
+
+### Docker
+
+Run LeakyRepo in any Docker-compatible CI/CD environment:
+
+```bash
+# Build the image
+docker build -t leakyrepo .
+
+# Run scan (config files from host are mounted automatically)
+docker run --rm -v $(pwd):/workspace -w /workspace leakyrepo scan --all
+
+# Run with JSON output
+docker run --rm -v $(pwd):/workspace -w /workspace leakyrepo scan --all --json report.json
+```
+
+**Exit Codes:**
+- `0`: No secrets found
+- `1`: Secrets detected (CI job should fail)
 
 ## Documentation
 

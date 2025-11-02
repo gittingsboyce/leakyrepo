@@ -1,0 +1,45 @@
+# Example GitHub Actions workflow for LeakyRepo secret scanning
+# This workflow scans for secrets on pull requests and pushes to main branch
+
+name: LeakyRepo Secret Scan
+
+# Trigger the workflow on pull request events and pushes to main
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+  push:
+    branches: [main]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    
+    steps:
+      # Checkout the repository code
+      # fetch-depth: 0 ensures we get the full git history for context
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      # Run LeakyRepo secret scan
+      # This will use the local Dockerfile to build and run the action
+      - name: Run LeakyRepo
+        uses: ./github-action
+        with:
+          # Default: scan all tracked files - will exit with error if secrets found
+          args: scan --all
+      
+      # Alternative examples:
+      # - Scan all files with JSON output
+      #   args: scan --all --json secrets-report.json
+      #
+      # - Scan all files with explanation mode
+      #   args: scan --all --explain
+      #
+      # - Scan only staged files (for pre-commit hooks)
+      #   args: scan
+      #
+      # - Scan specific file
+      #   args: scan src/app.js
+

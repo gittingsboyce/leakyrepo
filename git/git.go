@@ -63,3 +63,29 @@ func GetRepoRoot(startDir string) (string, error) {
 	return "", fmt.Errorf("not a git repository")
 }
 
+// GetAllTrackedFiles returns a list of all tracked files in the git repository
+func GetAllTrackedFiles(repoRoot string) ([]string, error) {
+	cmd := exec.Command("git", "ls-tree", "-r", "--name-only", "HEAD")
+	cmd.Dir = repoRoot
+	output, err := cmd.Output()
+	if err != nil {
+		return nil, fmt.Errorf("failed to get tracked files: %w", err)
+	}
+
+	if len(output) == 0 {
+		return []string{}, nil
+	}
+
+	files := strings.Split(strings.TrimSpace(string(output)), "\n")
+	var trackedFiles []string
+	for _, file := range files {
+		if file != "" {
+			// Convert to absolute path
+			absPath := filepath.Join(repoRoot, file)
+			trackedFiles = append(trackedFiles, absPath)
+		}
+	}
+
+	return trackedFiles, nil
+}
+

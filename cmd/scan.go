@@ -17,6 +17,7 @@ var (
 	jsonOutput string
 	explain    bool
 	interactive bool
+	scanAll   bool
 )
 
 var scanCmd = &cobra.Command{
@@ -31,6 +32,7 @@ func init() {
 	scanCmd.Flags().StringVar(&jsonOutput, "json", "", "Output results to JSON file")
 	scanCmd.Flags().BoolVar(&explain, "explain", false, "Show explanation for each detected secret")
 	scanCmd.Flags().BoolVarP(&interactive, "interactive", "i", false, "Interactive mode: prompt to ignore false positives")
+	scanCmd.Flags().BoolVar(&scanAll, "all", false, "Scan all tracked files in the repository (default: scan staged files)")
 }
 
 func runScan(cmd *cobra.Command, args []string) error {
@@ -75,23 +77,39 @@ func runScan(cmd *cobra.Command, args []string) error {
 			filesToScan = append(filesToScan, absPath)
 		}
 	} else {
-		// Get staged files from git
+		// Get files from git
 		repoRoot, err := git.GetRepoRoot(workDir)
 		if err != nil {
 			return fmt.Errorf("failed to find git repository: %w\nSpecify files to scan or run from within a git repository", err)
 		}
 
-		stagedFiles, err := git.GetStagedFiles(repoRoot)
-		if err != nil {
-			return fmt.Errorf("failed to get staged files: %w", err)
-		}
+		if scanAll {
+			// Get all tracked files
+			trackedFiles, err := git.GetAllTrackedFiles(repoRoot)
+			if err != nil {
+				return fmt.Errorf("failed to get tracked files: %w", err)
+			}
 
-		if len(stagedFiles) == 0 {
-			fmt.Println("No files staged for commit.")
-			return nil
-		}
+			if len(trackedFiles) == 0 {
+				fmt.Println("No tracked files in repository.")
+				return nil
+			}
 
-		filesToScan = stagedFiles
+			filesToScan = trackedFiles
+		} else {
+			// Get staged files from git
+			stagedFiles, err := git.GetStagedFiles(repoRoot)
+			if err != nil {
+				return fmt.Errorf("failed to get staged files: %w", err)
+			}
+
+			if len(stagedFiles) == 0 {
+				fmt.Println("No files staged for commit.")
+				return nil
+			}
+
+			filesToScan = stagedFiles
+		}
 	}
 
 	// Scan files
