@@ -17,3 +17,5 @@ dist/
 # Scripts with complex bash patterns
 scripts/
 
+# README (has markdown link false positives)
+README.md

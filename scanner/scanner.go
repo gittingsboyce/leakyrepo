@@ -219,7 +219,21 @@ func (s *Scanner) shouldIgnoreFile(filePath string) bool {
 		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
 			return true
 		}
-		// Support directory patterns
+		// Support directory patterns ending with /
+		if strings.HasSuffix(pattern, "/") {
+			dirPattern := strings.TrimSuffix(pattern, "/")
+			// Try absolute path first
+			if strings.HasPrefix(filePath, dirPattern+"/") {
+				return true
+			}
+			// Also check relative path from workDir
+			if relPath, err := filepath.Rel(s.workDir, filePath); err == nil {
+				if strings.HasPrefix(relPath, dirPattern+"/") || relPath == dirPattern {
+					return true
+				}
+			}
+		}
+		// Support directory patterns ending with /**
 		if strings.HasSuffix(pattern, "/**") {
 			dirPattern := strings.TrimSuffix(pattern, "/**")
 			// Try absolute path first
