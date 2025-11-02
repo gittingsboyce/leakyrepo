@@ -21,7 +21,7 @@ runs:
   image: '../Dockerfile'
   
   # Forward all input arguments to the leakyrepo binary
-  # Note: GitHub Actions treats inputs.args as a single string, but Cobra will parse it correctly
+  # The entrypoint.sh script handles splitting single-string arguments
   args:
     - ${{ inputs.args }}
 
