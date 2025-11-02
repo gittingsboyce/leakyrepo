@@ -10,12 +10,17 @@
 # dist/
 # build/
 
-# Test files (optional, uncomment if needed)
-# *_test.go
-# test_*.py
+# Test files (often contain intentional high-entropy strings)
+*_test.go
+test_*.py
 
-# Lock files (optional)
+# Lock files (high entropy hashes, safe to ignore)
 # package-lock.json
 # yarn.lock
-# go.sum
+go.sum
+
+# Compiled binaries (local builds, safe to ignore)
+leakyrepo*
+build/
+dist/
 

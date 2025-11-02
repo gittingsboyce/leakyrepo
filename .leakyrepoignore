@@ -1,0 +1,19 @@
+# LeakyRepo Ignore File for this repository
+# Common false positives for Go projects
+
+# Lock files (high entropy hashes from Go modules)
+go.sum
+
+# Test files (contain intentional test data)
+*_test.go
+
+# Compiled binaries
+leakyrepo*
+
+# Build artifacts
+build/
+dist/
+
+# Scripts with complex bash patterns
+scripts/
+
