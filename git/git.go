@@ -67,9 +67,9 @@ func GetRepoRoot(startDir string) (string, error) {
 func GetAllTrackedFiles(repoRoot string) ([]string, error) {
 	cmd := exec.Command("git", "ls-tree", "-r", "--name-only", "HEAD")
 	cmd.Dir = repoRoot
-	output, err := cmd.Output()
+	output, err := cmd.CombinedOutput()
 	if err != nil {
-		return nil, fmt.Errorf("failed to get tracked files: %w", err)
+		return nil, fmt.Errorf("failed to get tracked files: %w\nOutput: %s", err, string(output))
 	}
 
 	if len(output) == 0 {
