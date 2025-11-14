@@ -43,7 +43,7 @@ type Allowlist struct {
 // DefaultConfig returns a default configuration with common secret detection rules
 func DefaultConfig() *Config {
 	return &Config{
-		EntropyThreshold: 4.5,
+		EntropyThreshold: 5.5, // Increased from 4.5 to reduce false positives
 		Rules: []Rule{
 			{
 				ID:          "aws_access_key",
@@ -61,7 +61,14 @@ func DefaultConfig() *Config {
 			},
 		},
 		Allowlist: Allowlist{
-			Files: []string{".leakyrepoignore", ".git/**"},
+			Files: []string{
+				".leakyrepoignore",
+				".git/**",
+				"*.png", "*.jpg", "*.jpeg", "*.gif", "*.ico", "*.svg", "*.webp", // Images
+				"*.pdf", "*.zip", "*.tar", "*.gz", "*.bz2", // Archives
+				"*.exe", "*.dll", "*.so", "*.dylib", // Binaries
+				"*.woff", "*.woff2", "*.ttf", "*.eot", // Fonts
+			},
 		},
 	}
 }

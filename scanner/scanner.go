@@ -49,6 +49,50 @@ func NewScanner(cfg *config.Config, ignorePatterns []string) (*Scanner, error) {
 	return scanner, nil
 }
 
+// isBinaryFile checks if a file is binary by examining its content
+func isBinaryFile(content []byte) bool {
+	// Check for common binary file signatures
+	if len(content) < 4 {
+		return false
+	}
+	
+	// PNG: 89 50 4E 47
+	if len(content) >= 4 && content[0] == 0x89 && content[1] == 0x50 && content[2] == 0x4E && content[3] == 0x47 {
+		return true
+	}
+	
+	// JPEG: FF D8 FF
+	if len(content) >= 3 && content[0] == 0xFF && content[1] == 0xD8 && content[2] == 0xFF {
+		return true
+	}
+	
+	// GIF: 47 49 46 38
+	if len(content) >= 4 && content[0] == 0x47 && content[1] == 0x49 && content[2] == 0x46 && content[3] == 0x38 {
+		return true
+	}
+	
+	// Check if file contains too many null bytes or non-printable characters
+	// If more than 30% of bytes are non-printable (excluding common whitespace), it's likely binary
+	nonPrintableCount := 0
+	for i := 0; i < len(content) && i < 512; i++ { // Check first 512 bytes
+		b := content[i]
+		if b < 32 && b != '\t' && b != '\n' && b != '\r' {
+			nonPrintableCount++
+		}
+	}
+	
+	checkedBytes := len(content)
+	if checkedBytes > 512 {
+		checkedBytes = 512
+	}
+	
+	if checkedBytes > 0 && float64(nonPrintableCount)/float64(checkedBytes) > 0.3 {
+		return true
+	}
+	
+	return false
+}
+
 // ScanFile scans a single file for secrets
 func (s *Scanner) ScanFile(filePath string) ([]Result, error) {
 	// Check if file should be ignored
@@ -60,6 +104,11 @@ func (s *Scanner) ScanFile(filePath string) ([]Result, error) {
 	content, err := os.ReadFile(filePath)
 	if err != nil {
 		return nil, fmt.Errorf("failed to read file %s: %w", filePath, err)
+	}
+
+	// Skip binary files
+	if isBinaryFile(content) {
+		return nil, nil
 	}
 
 	var results []Result
@@ -137,7 +186,8 @@ func (s *Scanner) scanLine(line string, lineNum int, filePath, fileExt string) [
 	// Split line by common delimiters and check each token
 	tokens := tokenizeLine(line)
 	for _, token := range tokens {
-		if len(token) >= 8 && IsHighEntropy(token, s.config.EntropyThreshold) {
+		// Minimum length must match IsHighEntropy requirement (16 chars)
+		if len(token) >= 16 && IsHighEntropy(token, s.config.EntropyThreshold) {
 			// Check if token is allowlisted
 			allowlisted := false
 			for _, allowed := range s.config.Allowlist.Strings {
@@ -177,23 +227,50 @@ func (s *Scanner) scanLine(line string, lineNum int, filePath, fileExt string) [
 }
 
 // tokenizeLine splits a line into potential secret tokens
+// Focuses on common secret patterns (key=value, key:value) rather than aggressive splitting
 func tokenizeLine(line string) []string {
-	// Common delimiters for secrets in config files
-	delimiters := []string{" ", "\t", "=", ":", ",", ";", "|", "\"", "'", "`"}
-	tokens := []string{line}
-
-	for _, delim := range delimiters {
-		var newTokens []string
-		for _, token := range tokens {
-			parts := strings.Split(token, delim)
-			for _, part := range parts {
-				part = strings.TrimSpace(part)
-				if len(part) > 0 {
-					newTokens = append(newTokens, part)
+	var tokens []string
+	
+	// First, try to extract values from common key-value patterns
+	// Pattern: key=value or key:value (common in .env, config files)
+	kvPatterns := []string{"=", ":", " = ", " : "}
+	for _, sep := range kvPatterns {
+		if strings.Contains(line, sep) {
+			parts := strings.SplitN(line, sep, 2)
+			if len(parts) == 2 {
+				// Extract the value part (right side)
+				value := strings.TrimSpace(parts[1])
+				// Remove quotes if present
+				value = strings.Trim(value, "\"'`")
+				if len(value) >= 16 {
+					tokens = append(tokens, value)
 				}
 			}
 		}
-		tokens = newTokens
+	}
+	
+	// If no key-value patterns found, split by whitespace and common delimiters
+	// but only for longer tokens to reduce false positives
+	if len(tokens) == 0 {
+		delimiters := []string{" ", "\t", ",", ";", "|"}
+		currentTokens := []string{line}
+		
+		for _, delim := range delimiters {
+			var newTokens []string
+			for _, token := range currentTokens {
+				parts := strings.Split(token, delim)
+				for _, part := range parts {
+					part = strings.TrimSpace(part)
+					// Only keep tokens that are long enough and don't look like code
+					if len(part) >= 16 && !strings.Contains(part, "${") && 
+					   !strings.HasPrefix(part, "<") && !strings.Contains(part, "[") {
+						newTokens = append(newTokens, part)
+					}
+				}
+			}
+			currentTokens = newTokens
+		}
+		tokens = currentTokens
 	}
 
 	return tokens
