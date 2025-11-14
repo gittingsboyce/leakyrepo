@@ -109,6 +109,28 @@ func TestScanner_shouldIgnoreFile(t *testing.T) {
 			expected: false,
 		},
 	}
+	
+	// Add relative path pattern to ignorePatterns for the new test
+	// This tests that a relative path pattern (like those added via interactive mode)
+	// can match an absolute file path
+	ignorePatterns = append(ignorePatterns, "src/pages/Index.tsx")
+	scnr.ignorePatterns = ignorePatterns
+	
+	// Get current working directory for the absolute path test
+	workDir, err := os.Getwd()
+	if err != nil {
+		t.Fatalf("Failed to get working directory: %v", err)
+	}
+	
+	tests = append(tests, struct {
+		name     string
+		filePath string
+		expected bool
+	}{
+		name:     "relative path pattern should match absolute path",
+		filePath: filepath.Join(workDir, "src/pages/Index.tsx"),
+		expected: true,
+	})
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

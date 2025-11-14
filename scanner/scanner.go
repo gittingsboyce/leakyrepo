@@ -290,11 +290,25 @@ func (s *Scanner) shouldIgnoreFile(filePath string) bool {
 
 	// Check .leakyrepoignore patterns
 	for _, pattern := range s.ignorePatterns {
+		// Try matching against absolute path
 		if matched, _ := filepath.Match(pattern, filePath); matched {
 			return true
 		}
+		// Try matching against base filename
 		if matched, _ := filepath.Match(pattern, filepath.Base(filePath)); matched {
 			return true
+		}
+		// Try matching against relative path from workDir (important for patterns added via interactive mode)
+		if relPath, err := filepath.Rel(s.workDir, filePath); err == nil {
+			if matched, _ := filepath.Match(pattern, relPath); matched {
+				return true
+			}
+			// Also try normalized path separators (handle Windows vs Unix paths)
+			normalizedPattern := strings.ReplaceAll(pattern, "\\", "/")
+			normalizedRelPath := strings.ReplaceAll(relPath, "\\", "/")
+			if matched, _ := filepath.Match(normalizedPattern, normalizedRelPath); matched {
+				return true
+			}
 		}
 		// Support directory patterns ending with /
 		if strings.HasSuffix(pattern, "/") {
@@ -306,6 +320,12 @@ func (s *Scanner) shouldIgnoreFile(filePath string) bool {
 			// Also check relative path from workDir
 			if relPath, err := filepath.Rel(s.workDir, filePath); err == nil {
 				if strings.HasPrefix(relPath, dirPattern+"/") || relPath == dirPattern {
+					return true
+				}
+				// Also check normalized paths
+				normalizedPattern := strings.ReplaceAll(dirPattern, "\\", "/")
+				normalizedRelPath := strings.ReplaceAll(relPath, "\\", "/")
+				if strings.HasPrefix(normalizedRelPath, normalizedPattern+"/") || normalizedRelPath == normalizedPattern {
 					return true
 				}
 			}
@@ -320,6 +340,12 @@ func (s *Scanner) shouldIgnoreFile(filePath string) bool {
 			// Also check relative path from workDir
 			if relPath, err := filepath.Rel(s.workDir, filePath); err == nil {
 				if strings.HasPrefix(relPath, dirPattern+"/") {
+					return true
+				}
+				// Also check normalized paths
+				normalizedPattern := strings.ReplaceAll(dirPattern, "\\", "/")
+				normalizedRelPath := strings.ReplaceAll(relPath, "\\", "/")
+				if strings.HasPrefix(normalizedRelPath, normalizedPattern+"/") {
 					return true
 				}
 			}
