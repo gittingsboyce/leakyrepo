@@ -1,0 +1,45 @@
+# Git
+.git
+.gitignore
+
+# Build artifacts
+build/
+dist/
+leakyrepo
+*.tar.gz
+*.zip
+
+# Test files
+*.test
+coverage.*
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+.AppleDouble
+
+# Config (users will mount their own)
+.leakyrepo.yml
+.leakyrepoignore
+
+# Documentation (not needed in image)
+*.md
+LICENSE
+QUICKSTART.md
+USAGE.md
+HOMEBREW.md
+PUBLISH.md
+STEP2.md
+
+# Scripts (not needed in image)
+scripts/
+Makefile
+
+# Homebrew
+Formula/
+

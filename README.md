@@ -23,6 +23,12 @@ brew tap gittingsboyce/leakyrepo
 brew install leakyrepo
 ```
 
+### Docker
+
+```bash
+docker run --rm --platform linux/amd64 -v $(pwd):/workspace -w /workspace gittingsboyce/leakyrepo:latest scan
+```
+
 ### Build from Source
 
 ```bash
@@ -51,13 +57,13 @@ leakyrepo install-hook
 | Command | Description |
 |---------|-------------|
 | `leakyrepo scan [files...]` | Scan files (or staged files if none specified) |
-| `leakyrepo scan --all` | Scan all tracked files in the repository (useful for CI/CD) |
 | `leakyrepo scan -i` | **Interactive mode** - prompt to ignore false positives |
 | `leakyrepo scan --json <file>` | Output JSON report |
 | `leakyrepo scan --explain` | Show explanation for each detection |
 | `leakyrepo ignore <file>` | Quick command to ignore a file or pattern |
 | `leakyrepo init` | Create default `.leakyrepo.yml` |
 | `leakyrepo install-hook` | Install Git pre-commit hook |
+| `docker run gittingsboyce/leakyrepo` | Run via Docker (useful for CI/CD) |
 
 ## Configuration
 

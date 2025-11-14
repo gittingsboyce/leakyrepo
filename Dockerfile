@@ -1,63 +1,44 @@
-# LeakyRepo Docker Image
-# A minimal, secure container for running LeakyRepo in CI/CD pipelines
+# Multi-stage build for LeakyRepo
+# Stage 1: Build
+FROM --platform=$BUILDPLATFORM golang:1.21-alpine AS builder
 
-# Build stage - compile the binary
-FROM golang:1.21-alpine AS builder
-
-# Install git for go modules (needed for some dependencies)
-RUN apk --no-cache add git
+ARG TARGETOS=linux
+ARG TARGETARCH=amd64
+ARG BUILDPLATFORM
 
 WORKDIR /build
 
 # Copy go mod files
 COPY go.mod go.sum ./
-
-# Download dependencies
 RUN go mod download
 
 # Copy source code
 COPY . .
 
-# Build the binary
-# Use -ldflags to reduce binary size
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build \
-    -ldflags="-w -s" \
-    -o leakyrepo \
-    .
+# Build the binary for the target platform
+RUN CGO_ENABLED=0 GOOS=${TARGETOS} GOARCH=${TARGETARCH} go build \
+    -ldflags="-s -w" \
+    -o leakyrepo .
 
-# Final stage - minimal runtime image
-FROM alpine:latest
+# Stage 2: Runtime
+FROM --platform=$TARGETPLATFORM alpine:latest
 
-# Metadata for maintainability
-LABEL maintainer="LeakyRepo Team"
-LABEL description="LeakyRepo secrets detection tool in a container"
+ARG TARGETPLATFORM=linux/amd64
 
-# Install required packages:
-# - ca-certificates for HTTPS operations
-# - git for repository scanning functionality
-# - BusyBox provides basic Unix utilities needed by LeakyRepo
-RUN apk --no-cache add ca-certificates git
+# Install git (needed for pre-commit hooks and staged file detection)
+# Git will be installed for the correct platform automatically
+RUN apk --no-cache add git ca-certificates
 
-# Copy the compiled binary from builder stage
+WORKDIR /app
+
+# Copy binary from builder
 COPY --from=builder /build/leakyrepo /usr/local/bin/leakyrepo
 
-# Copy entrypoint script
-COPY entrypoint.sh /entrypoint.sh
+# Make binary executable
+RUN chmod +x /usr/local/bin/leakyrepo
 
-# Ensure files are executable
-RUN chmod +x /usr/local/bin/leakyrepo /entrypoint.sh
-
-# Set working directory to allow mounting project files
+# Set working directory to /workspace (where users will mount their code)
 WORKDIR /workspace
 
-# Note: We run as root for Docker container actions compatibility
-# GitHub Actions may mount volumes that require root permissions
-
-# Set the entrypoint to our script
-# All arguments passed to docker run will be forwarded to leakyrepo via the script
-ENTRYPOINT ["/entrypoint.sh"]
-
-# Default command if none provided
-# Users can override this with docker run arguments
-CMD ["scan", "--help"]
-
+# Default command
+ENTRYPOINT ["leakyrepo"]
