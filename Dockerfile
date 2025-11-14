@@ -34,11 +34,14 @@ WORKDIR /app
 # Copy binary from builder
 COPY --from=builder /build/leakyrepo /usr/local/bin/leakyrepo
 
-# Make binary executable
-RUN chmod +x /usr/local/bin/leakyrepo
+# Copy entrypoint script (for GitHub Actions argument handling)
+COPY entrypoint.sh /usr/local/bin/entrypoint.sh
+
+# Make binaries executable
+RUN chmod +x /usr/local/bin/leakyrepo /usr/local/bin/entrypoint.sh
 
 # Set working directory to /workspace (where users will mount their code)
 WORKDIR /workspace
 
-# Default command
-ENTRYPOINT ["leakyrepo"]
+# Use entrypoint script to handle GitHub Actions argument parsing
+ENTRYPOINT ["/usr/local/bin/entrypoint.sh"]

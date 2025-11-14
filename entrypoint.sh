@@ -18,7 +18,7 @@ fi
 
 # If first argument contains spaces, it's likely a string from GitHub Actions
 # Split it into separate arguments
-if echo "$1" | grep -q ' '; then
+if [ $# -eq 1 ] && echo "$1" | grep -q ' '; then
     # Use eval to properly split the arguments
     eval "set -- $1"
 fi
