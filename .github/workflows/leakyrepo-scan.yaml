@@ -28,7 +28,7 @@ jobs:
         uses: ./github-action
         with:
           # Default: scan all tracked files - will exit with error if secrets found
-          args: scan --all
+          args: scan
       
       # Alternative examples:
       # - Scan all files with JSON output
