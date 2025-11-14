@@ -9,7 +9,7 @@ set -e
 # Handle both /github/workspace (GitHub Actions) and /workspace (custom workflows)
 if command -v git >/dev/null 2>&1; then
     if [ -d "/github/workspace" ]; then
-        git config --global --add safe.directory /github/workspace 2>/dev/null || true
+    git config --global --add safe.directory /github/workspace 2>/dev/null || true
     fi
     if [ -d "/workspace" ]; then
         git config --global --add safe.directory /workspace 2>/dev/null || true
