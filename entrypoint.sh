@@ -6,8 +6,18 @@ set -e
 
 # Fix Git "dubious ownership" error in GitHub Actions
 # The workspace is owned by root but we need to access it
-if [ -d "/github/workspace" ] && command -v git >/dev/null 2>&1; then
-    git config --global --add safe.directory /github/workspace 2>/dev/null || true
+# Handle both /github/workspace (GitHub Actions) and /workspace (custom workflows)
+if command -v git >/dev/null 2>&1; then
+    if [ -d "/github/workspace" ]; then
+        git config --global --add safe.directory /github/workspace 2>/dev/null || true
+    fi
+    if [ -d "/workspace" ]; then
+        git config --global --add safe.directory /workspace 2>/dev/null || true
+    fi
+    # Also add current working directory if it's a git repo
+    if [ -d ".git" ]; then
+        git config --global --add safe.directory "$(pwd)" 2>/dev/null || true
+    fi
 fi
 
 # If no arguments provided, use the default CMD from Dockerfile
